@@ -83,7 +83,7 @@ npm run check
 npm test
 ```
 
-21 Node tests pass, including a 30-fixture deterministic recovery benchmark, HTTP session/authorization/CSRF/privacy tests, real SDK request serialization with a mocked model response, and simulated Twitch EventSub handshake/deduplication/migration/revocation. Fixtures are disclosed test data; they do not establish real provider availability or model accuracy.
+22 Node tests pass, including a 30-fixture deterministic recovery benchmark, HTTP session/authorization/CSRF/privacy tests, real SDK request serialization with a mocked model response, and simulated Twitch EventSub handshake/deduplication/migration/revocation. Fixtures are disclosed test data; they do not establish real provider availability or model accuracy.
 
 The browser test uses independent instructor and learner contexts and tests customization, actual RSVP behavior, saving, safe undo, live checkpoint/note/pause delivery, sharing/revocation and mobile layout. Start a disposable server with `REJOIN_HOST_PASSWORD=test-only-password-123456` and an isolated `REJOIN_DATA_FILE`, then run `python3 test/browser.py` with Python Playwright installed. `CHROMIUM_PATH` can select an existing browser. `python3 test/browser-ai.py` additionally tests AI consent and approval using a disclosed mock response, never a real model call. The test password is a fixture only; never use it for a deployed room.
 

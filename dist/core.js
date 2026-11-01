@@ -7,7 +7,7 @@ export const checkpoints = [
 export const binding = "button.addEventListener('click', register);";
 export const broken = `// Your community. Your event.\nconst button = document.querySelector('#rsvp');\nconst status = document.querySelector('#status');\n\nfunction register() {\n  button.textContent = "You're on the list!";\n  button.disabled = true;\n  status.textContent = 'See you at the next stream.';\n}\n\n// TODO: connect the button to register\n`;
 export const fixed = broken.replace('// TODO: connect the button to register', binding);
-export const complete = fixed.replace("  button.disabled = true;", "  button.disabled = true;\n  document.querySelector('#count').textContent = '43';");
+export const complete = fixed.replace("  button.disabled = true;", "  button.disabled = true;\n  document.querySelector('#count').textContent = String(Number(document.querySelector('#count').textContent) + 1);");
 export const alternative = fixed.replace(binding, 'button.onclick = register;');
 export const starter = {
  'index.html': `<main class="event-card">\n  <span class="eyebrow">THE COMMUNITY HANGOUT</span>\n  <h1>Late Night Builders</h1>\n  <p>A little code. Good company. Something worth building.</p>\n  <div class="event-meta">SAT, NOV 14 · 7:00 PM CT</div>\n  <div class="attendees"><span id="count">42</span> builders joining</div>\n  <button id="rsvp">Save my spot <span>↗</span></button>\n  <p id="status" role="status" aria-live="polite">No tickets. Just bring your curiosity.</p>\n</main>`,
@@ -37,7 +37,7 @@ export function propose(files, target, protectedFiles = []) {
  if(target==='C3'){
   const fn=parse(repaired,{ecmaVersion:2022}).body.find(node=>node.type==='FunctionDeclaration'&&node.id.name==='register');
   const statement=fn.body.body.find(node=>node.type==='ExpressionStatement'&&node.expression.type==='AssignmentExpression'&&node.expression.left.property?.name==='disabled');
-  const line="\n  document.querySelector('#count').textContent = '43';";
+  const line="\n  document.querySelector('#count').textContent = String(Number(document.querySelector('#count').textContent) + 1);";
   repaired=repaired.slice(0,statement.end)+line+repaired.slice(statement.end);additions.push(line.trim());
  }
  const next={...files,'script.js':repaired};

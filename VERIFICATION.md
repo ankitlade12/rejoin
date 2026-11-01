@@ -5,7 +5,7 @@ Updated November 1, 2026. These are observed checks, not blanket production cert
 | Flow | Evidence | Limit |
 | --- | --- | --- |
 | Recovery and preservation | 30 deterministic fixtures in automated suite | Prepared workshop only |
-| App logic, privacy and auth | 21 Node tests passing | No independent security audit |
+| App logic, privacy and auth | 22 Node tests passing | No independent security audit |
 | Real AI recovery | Browser consent → live OpenAI response → candidate checks → approval → working RSVP | One prepared fixture, not model accuracy evaluation |
 | Customization and undo | Custom event title retained; reload and undo passed in Chromium | No cloud file sync |
 | Live Twitch checkpoint | User sent !checkpoint C3; connected room changed from C2 to C3 | Local deployment at time of observation |
