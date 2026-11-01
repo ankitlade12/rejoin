@@ -59,7 +59,7 @@ Follow Twitch's [chatbot guide](https://dev.twitch.tv/docs/chat/chatbot-guide/) 
 5. For learner commands, configure the client secret and exact redirect. Learners choose Community & privacy → Link Twitch, then separately enable sharing. `!stuck` / `!ready` use validated Twitch user IDs, never a typed username.
 6. With public HTTPS hosting and the write scope, explicitly enable `!rejoin` replies in the host console. Replies contain only the public invitation link.
 
-Learner linking requests no resource scopes; the temporary token is validated for identity and discarded. Linking expires with the 24-hour guest session. Credentials are never given to the model/browser. Expired broadcaster credentials require replacement and restart; automatic refresh is not implemented. Connection gaps are visible and missed events are not invented. Commands and replies are not a general-purpose chatbot.
+Learner linking requests no resource scopes; the temporary token is validated for identity and discarded. Linking expires with the 24-hour guest session. Credentials are never given to the model/browser. Use the authenticated host console’s Connect Twitch action to authorize the broadcaster. Its refresh token is encrypted on the persistent volume using a key derived from the instructor password; expired tokens renew on a 401 response. Changing the instructor password requires reconnecting Twitch. A manually supplied access token without a refresh token still requires replacement when it expires. Connection gaps are visible and missed events are not invented. Commands and replies are not a general-purpose chatbot.
 
 ## Share the full MVP
 
@@ -74,7 +74,7 @@ docker run --rm -p 4173:4173 --env-file .env -e HOST=0.0.0.0 \
   -v rejoin-data:/app/.data rejoin
 ```
 
-Docker packaging is provided but was not executed in this environment. TLS termination and the public hostname are hosting responsibilities. No public full-stack deployment is claimed.
+The production container was built and its health, frontend, parser asset, and secret-file rejection were checked locally. TLS termination and the public hostname are hosting responsibilities. No public full-stack deployment is claimed.
 
 ## Verification
 
@@ -83,7 +83,7 @@ npm run check
 npm test
 ```
 
-19 Node tests pass, including a 30-fixture deterministic recovery benchmark, HTTP session/authorization/CSRF/privacy tests, real SDK request serialization with a mocked model response, and simulated Twitch EventSub handshake/deduplication/migration/revocation. Fixtures are disclosed test data; they do not establish real provider availability or model accuracy.
+21 Node tests pass, including a 30-fixture deterministic recovery benchmark, HTTP session/authorization/CSRF/privacy tests, real SDK request serialization with a mocked model response, and simulated Twitch EventSub handshake/deduplication/migration/revocation. Fixtures are disclosed test data; they do not establish real provider availability or model accuracy.
 
 The browser test uses independent instructor and learner contexts and tests customization, actual RSVP behavior, saving, safe undo, live checkpoint/note/pause delivery, sharing/revocation and mobile layout. Start a disposable server with `REJOIN_HOST_PASSWORD=test-only-password-123456` and an isolated `REJOIN_DATA_FILE`, then run `python3 test/browser.py` with Python Playwright installed. `CHROMIUM_PATH` can select an existing browser. `python3 test/browser-ai.py` additionally tests AI consent and approval using a disclosed mock response, never a real model call. The test password is a fixture only; never use it for a deployed room.
 
@@ -99,7 +99,7 @@ Fonts load from Google Fonts with offline fallbacks. No analytics are included. 
 
 ## Remaining release gates
 
-- Configure and validate actual OpenAI and Twitch credentials. No real model call, OAuth round trip, chat event or reply has yet been verified.
+- Real OpenAI guidance and a real broadcaster chat checkpoint command have passed locally. Broadcaster OAuth renewal, learner OAuth linking, and optional chat replies still need a live account rehearsal.
 - Deploy the full Node application to a persistent HTTPS host for remote learners; the static private preview is insufficient for this.
 - Run a three-person live rehearsal and record the actual Twitch interaction.
 - Publish an accessible GitHub/GitLab/Bitbucket repository, record a public YouTube demo under three minutes, add the real Codex session ID and submit on Devpost.

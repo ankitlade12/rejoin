@@ -5,9 +5,12 @@ import {timingSafeEqual} from 'node:crypto';
 import {Store,digest,secret} from './lib/store.mjs';
 import {tutor,validateTutorInput} from './lib/ai.mjs';
 import {startTwitch} from './lib/twitch.mjs';
+import {TwitchVault,twitchAuthorizedFetch} from './lib/twitch-auth.mjs';
 const port=Number(process.env.PORT||4173), bind=process.env.HOST||'127.0.0.1';
 const origin=process.env.PUBLIC_ORIGIN||`http://localhost:${port}`;
 const store=new Store(process.env.REJOIN_DATA_FILE||fileURLToPath(new URL('./.data/state.json',import.meta.url)));
+const vault=new TwitchVault((process.env.REJOIN_DATA_FILE||fileURLToPath(new URL('./.data/state.json',import.meta.url)))+'.twitch.enc',process.env.REJOIN_HOST_PASSWORD);
+let stopTwitch=null,connecting=false;
 const clients=new Set(),limits=new Map(),jobs=new Map(),oauth=new Map();
 let connection='Twitch not connected',channel=null,canReply=false;
 const publicRoom=()=>({...store.publicRoom(connection,channel),canReply});
@@ -46,6 +49,7 @@ export const server=http.createServer(async(req,res)=>{
    if(!response.ok)fail(502,'Twitch sign-in failed.');const data=await response.json();
    const identityResponse=await fetch('https://id.twitch.tv/oauth2/validate',{headers:{Authorization:`OAuth ${data.access_token}`},signal:AbortSignal.timeout(10000)});
    if(!identityResponse.ok)fail(502,'Twitch identity could not be verified.');const identity=await identityResponse.json();if(identity.client_id!==process.env.TWITCH_CLIENT_ID||!identity.user_id)fail(403,'Twitch identity mismatch.');
+   if(state.purpose==='broadcaster'){host(session);if(!identity.scopes?.includes('user:read:chat'))fail(403,'Twitch chat permission is required.');vault.save(data);await connectBroadcaster(data);res.writeHead(303,{Location:'/?host=1'});return res.end();}
    for(const s of Object.values(store.data.sessions))if(s.linkedId===identity.user_id)s.linkedId=null;
    session.linkedId=identity.user_id;store.save();res.writeHead(303,{Location:'/?linked=1'});return res.end();
   }
@@ -72,10 +76,11 @@ export const server=http.createServer(async(req,res)=>{
     else if(data.action==='note'&&typeof data.note==='string'&&data.note.length<=800)store.data.room.note=data.note;
     else fail(400,'Invalid instructor action.');publish();return json(res,publicRoom());
    }
-   if(url.pathname==='/api/link'){
+   if(url.pathname==='/api/link'||url.pathname==='/api/connect-twitch'){
+    const broadcaster=url.pathname==='/api/connect-twitch';if(broadcaster)host(session);
     if(!process.env.TWITCH_CLIENT_ID||!process.env.TWITCH_CLIENT_SECRET)fail(503,'Twitch account linking is not configured.');
-    rate('link:'+digest(token),5,600000);const state=secret();oauth.set(state,{owner:digest(token),expires:Date.now()+300000});
-    const params=new URLSearchParams({client_id:process.env.TWITCH_CLIENT_ID,redirect_uri:origin+'/auth/twitch/callback',response_type:'code',scope:'',state,force_verify:'true'});
+    rate('link:'+digest(token),5,600000);const state=secret();oauth.set(state,{owner:digest(token),expires:Date.now()+300000,purpose:broadcaster?'broadcaster':'learner'});
+    const params=new URLSearchParams({client_id:process.env.TWITCH_CLIENT_ID,redirect_uri:origin+'/auth/twitch/callback',response_type:'code',scope:broadcaster?'user:read:chat user:write:chat':'',state,force_verify:'true'});
     return json(res,{url:'https://id.twitch.tv/oauth2/authorize?'+params});
    }
    if(url.pathname==='/api/unlink'){session.linkedId=null;store.save();return json(res,{ok:true});}
@@ -107,11 +112,23 @@ export const server=http.createServer(async(req,res)=>{
 });
 server.listen(port,bind,()=>console.log(`Rejoin: ${origin}`));
 server.on('error',error=>{console.error(`Server failed: ${error.code||'unknown error'}`);process.exitCode=1;});
-if(process.env.TWITCH_ACCESS_TOKEN&&process.env.TWITCH_CLIENT_ID)startTwitch({token:process.env.TWITCH_ACCESS_TOKEN,clientId:process.env.TWITCH_CLIENT_ID,
- onState:state=>{connection=state.connection;channel=state.channel;canReply=!!state.canReply;publish();},
- onCommand:(event,userId)=>{
-  if(event.type==='join'&&store.data.room.chatReplies&&canReply&&origin.startsWith('https://'))return `Join the coding workshop privately: ${origin}/?join=1`;
-  if(event.type==='checkpoint'){store.data.room.checkpoint=event.checkpoint;store.data.room.paused=false;store.data.room.ended=false;publish();}
-  if(event.type==='pause'){store.data.room.paused=true;publish();}
-  if(['stuck','ready'].includes(event.type)){const learner=Object.values(store.data.sessions).find(s=>s.linkedId===userId&&s.share&&s.expires>Date.now());if(learner){learner.progress=event.type;publish();}}
- }}).catch(()=>{connection='Twitch authentication failed';publish();});
+async function connectBroadcaster(tokens){
+ if(connecting)throw Object.assign(Error('Twitch connection is already being updated.'),{status:409});connecting=true;
+ try{
+  stopTwitch?.();stopTwitch=null;
+  stopTwitch=await startTwitch({token:tokens.access_token,clientId:process.env.TWITCH_CLIENT_ID,
+   fetchImpl:twitchAuthorizedFetch({tokens,clientId:process.env.TWITCH_CLIENT_ID,clientSecret:process.env.TWITCH_CLIENT_SECRET,onTokens:next=>vault.save(next)}),
+   onState:state=>{connection=state.connection;channel=state.channel;canReply=!!state.canReply;publish();},
+   onCommand:(event,userId)=>{
+    if(store.data.room.ended)return;
+    if(event.type==='join'&&store.data.room.chatReplies&&canReply&&origin.startsWith('https://'))return `Join the coding workshop privately: ${origin}/?join=1`;
+    if(event.type==='checkpoint'){store.data.room.checkpoint=event.checkpoint;store.data.room.paused=false;publish();}
+    if(event.type==='pause'){store.data.room.paused=true;publish();}
+    if(['stuck','ready'].includes(event.type)){const learner=Object.values(store.data.sessions).find(s=>s.linkedId===userId&&s.share&&s.expires>Date.now());if(learner){learner.progress=event.type;publish();}}
+   }});
+ }catch{connection='Twitch needs authorization';publish();throw Error('Twitch connection could not be established.');}finally{connecting=false;}
+}
+let storedTokens=null;try{storedTokens=vault.load();}catch{console.error('Saved Twitch authorization could not be opened. Connect Twitch again from the host console.');}
+if(process.env.TWITCH_CLIENT_ID&&(storedTokens||process.env.TWITCH_ACCESS_TOKEN))connectBroadcaster(storedTokens||{access_token:process.env.TWITCH_ACCESS_TOKEN}).catch(()=>{});
+function shutdown(){stopTwitch?.();for(const job of jobs.values())job.controller.abort();for(const client of clients)client.end();server.close(()=>process.exit(0));setTimeout(()=>process.exit(0),5000).unref();}
+process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);
