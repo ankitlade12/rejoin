@@ -1,3 +1,4 @@
+import {parse} from './vendor/acorn.mjs';
 export const checkpoints = [
   { id: 'C1', title: 'Make it yours', detail: 'Build your event page. Give it your own title and style.' },
   { id: 'C2', title: 'Wire up the RSVP', detail: 'Connect a click event to the RSVP button. Register only once.' },
@@ -19,9 +20,10 @@ export function validate(files) {
  if(keys.some(k => typeof files[k] !== 'string' || new TextEncoder().encode(files[k]).length > 100000)) throw Error('Each file must be text and smaller than 100 KB.');
 }
 export const snapshot = files => JSON.stringify(files);
-export function scriptKind(code) {
- return code === broken ? 'broken' : [fixed, alternative].includes(code) ? 'C2' : [complete, complete.replace(binding, 'button.onclick = register;')].includes(code) ? 'C3' : 'unsupported';
-}
+function signature(code){return JSON.stringify(parse(code,{ecmaVersion:2022}), (key,value)=>['start','end','raw'].includes(key)?undefined:value);}
+const patterns=[[broken,'broken'],[fixed,'C2'],[alternative,'C2'],[complete,'C3'],[complete.replace(binding,'button.onclick = register;'),'C3']].map(([code,kind])=>[signature(code),kind]);
+export function scriptKind(code) {try{if(typeof code!=='string'||code.length>100000)return 'unsupported';const ast=signature(code);return patterns.find(([pattern])=>pattern===ast)?.[1]||'unsupported';}catch{return 'unsupported';}}
+export function executableScript(code){const kind=scriptKind(code);return kind==='broken'?broken:kind==='C2'?fixed:kind==='C3'?complete:'';}
 export function propose(files, target, protectedFiles = []) {
  validate(files);
  const kind=scriptKind(files['script.js']);
@@ -29,9 +31,18 @@ export function propose(files, target, protectedFiles = []) {
  if (kind === 'unsupported') return {state:'unsupported',message:'This code differs from the prepared workshop. Your implementation may be valid. Automatic execution and repair are unavailable; export a help packet for your instructor.'};
  if (kind === 'C3' || (target === 'C2' && kind === 'C2')) return {state:'no-change',message:'Your event handler already meets the prepared code contract. No rewrite needed. Run checks to confirm the page structure.'};
  if (protectedFiles.includes('script.js')) return {state:'conflict',message:'The required change touches protected script.js. Keep it protected and ask your instructor, or unlock the file and request a new review.'};
- const repaired = kind === 'broken' ? fixed : files['script.js'];
- const next = {...files, 'script.js': target === 'C3' ? repaired.replace('  button.disabled = true;', "  button.disabled = true;\n  document.querySelector('#count').textContent = '43';") : repaired};
- return {state:'candidate',before:snapshot(files),after:snapshot(next),files:next,target,removed:kind==='broken'?'// TODO: connect the button to register':'  button.disabled = true;',added:target==='C3'?binding+"\n  document.querySelector('#count').textContent = '43';":binding};
+ let repaired=files['script.js'];
+ const additions=[];
+ if(kind==='broken'){repaired+='\n'+binding+'\n';additions.push(binding);}
+ if(target==='C3'){
+  const fn=parse(repaired,{ecmaVersion:2022}).body.find(node=>node.type==='FunctionDeclaration'&&node.id.name==='register');
+  const statement=fn.body.body.find(node=>node.type==='ExpressionStatement'&&node.expression.type==='AssignmentExpression'&&node.expression.left.property?.name==='disabled');
+  const line="\n  document.querySelector('#count').textContent = '43';";
+  repaired=repaired.slice(0,statement.end)+line+repaired.slice(statement.end);additions.push(line.trim());
+ }
+ const next={...files,'script.js':repaired};
+ if(scriptKind(repaired)!==target)throw Error('The suggested change is outside the supported workshop. Ask your instructor.');
+ return {state:'candidate',before:snapshot(files),after:snapshot(next),files:next,target,removed:'No existing lines removed',added:additions.join('\n')};
 }
 export function applyPlan(files, plan) {
  if(plan.state !== 'candidate' || snapshot(files)!==plan.before) throw Error('Your code changed since this review. Request a fresh review before applying.');
@@ -47,6 +58,6 @@ export function command(text, userId, hostId) {
  if(userId === hostId && /^!checkpoint C[123]$/.test(message)) return {type:'checkpoint',checkpoint:message.split(' ')[1]};
  if(userId === hostId && message === '!pause') return {type:'pause'};
  if(message === '!rejoin') return {type:'join'};
- // shortcut: learner account linking is not implemented; never associate chat identity with a private workspace.
+ // Learner signals are resolved separately against OAuth-linked, opted-in sessions.
  return null;
 }
