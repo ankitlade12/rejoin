@@ -146,8 +146,8 @@ Learners can work privately without linking Twitch. To report progress through c
 
 Rejoin currently supports one shared room and a prepared three-checkpoint RSVP workshop using HTML, CSS and JavaScript. Recovery recognizes supported workshop patterns; unfamiliar code is handed off for human help. Projects are stored on your device, with export and import for moving your work.
 
-*Keep learning. Keep your work. Rejoin the stream.*
-
 ## License
 
 [MIT](LICENSE) © 2026 Ankit Hemant Lade.
+
+*Keep learning. Keep your work. Rejoin the stream.*
