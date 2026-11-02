@@ -1,6 +1,6 @@
 # Rejoin — Your Place in the Stream
 
-**JavaScript · Node.js · OpenAI · AI SDK · Twitch EventSub · Acorn · Docker · Railway**
+**Live coding workshops · Guided recovery · Twitch community**
 
 [Live product](https://rejoin-production-bec2.up.railway.app/?join=1) · [Instructor](https://rejoin-production-bec2.up.railway.app/?host=1) · [Stream overlay](https://rejoin-production-bec2.up.railway.app/?overlay=1) · [Source](https://github.com/ankitlade12/rejoin)
 
@@ -12,9 +12,9 @@ Rejoin pairs a private browser workspace with a Twitch-connected classroom. Lear
 
 **Built for:** the TwitchCon × Codex hackathon
 
-**Proposed first users:** beginners and instructors in community coding workshops
+**Built for learners and instructors:** beginners and instructors in community coding workshops
 
-**Demo scope:** one live room and a prepared three-checkpoint HTML/CSS/JavaScript RSVP workshop with fictional event data
+**Current workshop:** one live room and a prepared three-checkpoint HTML/CSS/JavaScript RSVP workshop with fictional event data
 
 ## Quick Highlights
 
@@ -26,18 +26,6 @@ Rejoin pairs a private browser workspace with a Twitch-connected classroom. Lear
 - **Safe recovery history** — receipts retain attempts, approved changes and unfinished work; undo preserves later edits through a separate earlier-copy export.
 - **Human handoff** — select files, inspect the exact redacted packet and download it for sharing.
 - **Continue after the stream** — keep practicing locally when the instructor ends the workshop.
-
-## Live Deployment
-
-| Surface | Location | Access |
-|---|---|---|
-| Learner workspace | [Join the workshop](https://rejoin-production-bec2.up.railway.app/?join=1) | Public; no account required for private work |
-| Instructor console | [Instructor view](https://rejoin-production-bec2.up.railway.app/?host=1) | Instructor password required |
-| OBS browser source | [Stream overlay](https://rejoin-production-bec2.up.railway.app/?overlay=1) | Public lesson state and eligible aggregate signals |
-| Health | [/api/health](https://rejoin-production-bec2.up.railway.app/api/health) | Public runtime status |
-| Source | [GitHub repository](https://github.com/ankitlade12/rejoin) | Public |
-
-The deployment serves one shared workshop room. Each browser profile has its own local project, while instructor checkpoint changes reach all connected learners. Use separate browser profiles for instructor and learner demonstrations.
 
 ## The Problem
 
@@ -58,7 +46,7 @@ Rejoin explores this gap between watching a coding stream and continuing a perso
 
 AI provides guidance. Deterministic workshop logic proposes edits. The learner approves the change; neither AI advice nor self-reported readiness establishes that the project passes its checks.
 
-## Architecture Overview
+## How Rejoin Works
 
 ### Recovery Lifecycle
 
@@ -72,36 +60,6 @@ flowchart LR
     B --> G[Human handoff for unsupported work]
     F --> H[Receipt or safe undo]
 ```
-
-### System Architecture
-
-```mermaid
-flowchart TB
-    UI[Browser workspace] --> LOCAL[(Local files and recovery history)]
-    UI --> CORE[Prepared-workshop recovery logic]
-    CORE --> PREVIEW[Restricted preview and behavioral checks]
-    UI --> API[Same-origin Node server]
-    API --> AI[Consented OpenAI tutoring through AI SDK]
-    API --> STORE[(Room and session JSON on persistent volume)]
-    TWITCH[Twitch EventSub and OAuth] --> API
-    API --> SSE[Live room events]
-    SSE --> UI
-    SSE --> OVERLAY[OBS overlay]
-```
-
-### Tech Stack
-
-| Layer | Technology | Purpose |
-|---|---|---|
-| Interface | HTML, CSS, vanilla JavaScript | Editor, recovery review, instructor console and overlay |
-| Server | Node.js | Sessions, authorization, tutoring and live SSE updates |
-| Recovery | Acorn and prepared workshop contracts | Recognize supported script forms and propose focused changes |
-| Preview | Sandboxed iframe and trusted harness | Check the supported rendered workshop behavior |
-| AI | OpenAI Responses through AI SDK | Structured, optional tutoring with bounded input and output |
-| Live integration | Twitch EventSub WebSocket and OAuth | Broadcaster commands and consented learner signals |
-| Persistence | Browser localStorage and server JSON | Private projects locally; room/session state on the server |
-| Verification | Node test runner and Python Playwright | Unit, API, browser and restart checks |
-| Delivery | Docker and Railway | One continuously running service with persistent storage |
 
 ## Product Features
 
@@ -139,7 +97,7 @@ Help packets contain only selected files, with best-effort credential redaction 
 
 Recovery receipts retain attempts, approved changes, checkpoint versions and unfinished work. Undo after later edits offers a separate pre-fix copy rather than replacing newer work. Ending the live room stops AI work and disconnects Twitch; learners can continue local practice, checks and exports.
 
-## Judge Quick Start
+## Get Started
 
 Open [the learner workspace](https://rejoin-production-bec2.up.railway.app/?join=1).
 
@@ -151,7 +109,7 @@ Open [the learner workspace](https://rejoin-production-bec2.up.railway.app/?join
 6. Add another edit, then explore undo and its separate earlier-copy export.
 7. Inspect the help-packet preview, recovery receipt and optional community settings.
 
-Instructor controls require the deployment owner's password. No instructor credential is published. The prepared example demonstrates a bounded recovery workflow, not arbitrary-program repair.
+Instructor controls require the workshop owner's password. Learners can explore recovery without signing into the instructor console.
 
 ## Local Installation
 
@@ -169,124 +127,23 @@ Open http://localhost:4173. Setup creates an ignored `.env` with restricted perm
 
 Authored hints and local recovery work without provider credentials. The frontend is served directly from `dist/`; there is no separate frontend build step.
 
-## Configuration
+## Connect Your Community
 
-See [.env.example](.env.example). Keep credentials in local environment files or host secrets.
+Instructors authorize their Twitch channel from the instructor console, then use chat commands to coordinate the workshop. Public workshop-link replies are optional and can be enabled from the console.
 
-| Variable | Purpose |
-|---|---|
-| `REJOIN_HOST_PASSWORD` | Instructor password; minimum 16 characters |
-| `PUBLIC_ORIGIN` | Exact browser origin; defaults to `http://localhost:4173`, without trailing slash |
-| `HOST` / `PORT` | Bind address and port; defaults to loopback / 4173 |
-| `OPENAI_API_KEY` | Enables optional runtime AI tutoring |
-| `OPENAI_MODEL` | Model name; defaults to `gpt-5-mini` |
-| `REJOIN_AI_CALL_LIMIT` | Room calls per hour; defaults to 40, with five per guest per hour |
-| `TWITCH_CLIENT_ID` | Registered Twitch application client ID |
-| `TWITCH_ACCESS_TOKEN` | Broadcaster-owned user token with `user:read:chat` |
-| `TWITCH_CLIENT_SECRET` | Enables learner linking and renewable broadcaster authorization |
-| `REJOIN_DATA_FILE` | Persistent JSON store; defaults to `.data/state.json` |
+Learners can work privately without linking Twitch. To report progress through chat, link your account, enable sharing and save your choice before sending `!stuck` or `!ready`. Use separate browser profiles when demonstrating instructor and learner roles.
 
-AI uses one request without automatic retries, a 24 KB script limit, a 1,000-character question limit, a 1,800-token output cap and a 45-second deadline. AI never applies code or certifies behavior.
+## Privacy and Control
 
-## Twitch Integration
+- Your project stays in your browser unless you explicitly share code for AI guidance or export it.
+- AI guidance and community progress sharing require separate permission.
+- Review the exact code before requesting AI help, and approve each repair yourself.
+- Choose which files go into a help packet and review its redacted contents before sharing. Redaction can miss sensitive text.
+- Community progress excludes your code and private questions. Small public groups remain hidden.
+- Unlink Twitch or delete your workspace from the application settings.
 
-1. Register a Twitch application and add the exact callback: `http://localhost:4173/auth/twitch/callback` locally, or your public HTTPS origin followed by `/auth/twitch/callback` when hosted.
-2. Configure the application client ID and secret. A manually supplied broadcaster user token needs `user:read:chat`; optional replies additionally need `user:write:chat`.
-3. Sign into the instructor console and use **Authorize broadcaster chat** to obtain renewable authorization.
-4. Send a checkpoint command as the broadcaster and observe the connected learner page or overlay.
-5. In a separate learner browser profile, link Twitch, explicitly enable sharing and save before using `!stuck` or `!ready`.
-6. Enable public `!rejoin` replies in the instructor console only when wanted.
+## Supported Workshop
 
-Learner linking requests no resource scopes; the temporary identity token is validated and discarded. Linking expires with the 24-hour guest session. Broadcaster refresh tokens are encrypted on the persistent volume using a key derived from the instructor password. Changing that password requires reconnecting Twitch. A manually supplied token without a refresh grant still needs replacement when it expires. Connection gaps remain visible; missed events are not reconstructed.
-
-## Reproducible Verification
-
-```sh
-npm run check
-npm test
-node test/load.mjs
-```
-
-The workshop manifest pins version 1.1.0, reference hashes, prerequisites, check identifiers and the trusted preview harness hash. `npm run validate:workshop` rejects changed contracts.
-
-For browser verification, install Python Playwright and Chromium, then start a disposable room without live provider credentials:
-
-```sh
-python3 -m venv .venv
-.venv/bin/pip install playwright
-.venv/bin/playwright install chromium
-REJOIN_HOST_PASSWORD=test-only-password-123456 \
-  REJOIN_DATA_FILE=/tmp/rejoin-browser-check/state.json \
-  node server.mjs
-```
-
-In another terminal:
-
-```sh
-.venv/bin/python test/release.py
-```
-
-Use a fresh disposable data directory and keep port 4173 free. The suite changes its room; do not point it at the public workshop. `REJOIN_TEST_URL` selects another test origin and `CHROMIUM_PATH` selects an installed browser.
-
-Recorded verification on November 1, 2026, for application revision `fc8cf30`:
-
-| Check | Recorded result |
-|---|---|
-| Node tests | 25 passed |
-| Syntax and workshop manifest | Passed |
-| Browser release suite | 30 identified fixture outcomes and all three reference checkpoints passed |
-| Recovery regressions | Stale success, save failure, keyboard import and exact redacted handoff passed |
-| Local restart and concurrency | Ten clients; room, sessions and opt-in reports persisted across restart |
-| Hosted integration | Real OpenAI recovery, Twitch checkpoint delivery and hosted restart observed |
-
-The benchmark covers five fixture categories, including explicit abstentions for unsupported code. It is not complete PRD coverage or evidence of general model accuracy. Automated three-persona checks do not replace three human participants; automated accessibility checks do not establish screen-reader usability or WCAG conformance.
-
-## Repository Structure
-
-```text
-rejoin/
-├── dist/                       # Interface, recovery logic, preview and manifest
-├── lib/                        # AI, Twitch, OAuth, room storage and validation
-├── scripts/                    # Setup, diagnostics, manifest and video tooling
-├── test/                       # Node tests, browser journeys and fixtures
-├── server.mjs                  # HTTP routes, sessions and live room events
-├── Dockerfile
-├── railway.json
-├── package.json
-├── .env.example
-└── README.md                   # Product, setup and release information
-```
-
-## Deployment
-
-```sh
-docker build -t rejoin .
-docker volume create rejoin-data
-docker run --rm -p 4173:4173 --env-file .env -e HOST=0.0.0.0 \
-  -v rejoin-data:/app/.data rejoin
-```
-
-Use one continuously running instance behind HTTPS with a writable persistent volume. Set `PUBLIC_ORIGIN` to the exact external origin, register its Twitch callback and proxy SSE without buffering. The [Dockerfile](Dockerfile) and [Railway configuration](railway.json) serve UI and API together. Verify health, authorization, checkpoint delivery and persistence after deployment.
-
-The JSON store is intended for one process. Multiple replicas, ephemeral serverless storage and static-only hosting do not support the complete application. There are no automatic backups.
-
-## Privacy and Execution Boundaries
-
-- Files and local recovery history remain in browser storage unless explicitly shared for AI or exported. One browser profile shares that storage.
-- AI receives only approved script/question/checkpoint data. Rejoin does not retain uploaded code or model transcripts; provider requests use `store:false`, and provider retention policies still apply.
-- Server storage contains room state, hashed session tokens, CSRF values, optional linked Twitch identities and consented progress. Guest sessions expire after 24 hours.
-- Workspace deletion aborts active AI work, removes the server session/link/sharing and clears local files after server deletion succeeds.
-- The iframe uses an opaque origin, an HTML allowlist and a network-denying CSP. Arbitrary learner JavaScript never executes: recognized workshop forms run as trusted canonical equivalents.
-- Candidate checks cover that constrained representation. Unsupported programs receive a handoff; visual quality and general code correctness are not certified.
-- Secret screening is best-effort. Review every packet before forwarding it.
-- Fonts load from Google Fonts with offline fallbacks. No analytics are included.
-
-## Production Boundary and Next Steps
-
-Rejoin is a single-room hackathon MVP with one prepared workshop. Multi-room hosting, arbitrary code execution, cloud project sync and a general workshop-authoring interface are outside the current implementation.
-
-Live learner `!ready`, broadcaster checkpoint delivery and a visible `!rejoin` reply were observed. A distinct consented `!stuck` status transition and actual broadcaster token renewal still need end-to-end confirmation. Renewable OAuth support in the code is not evidence that a refresh grant was saved or renewed in the hosted room.
-
-Before broader adoption, complete human screen-reader review and a three-person workshop rehearsal, validate community demand, and add operational backups and appropriate multi-room persistence. No learning improvement, time savings or human accessibility certification is claimed.
+Rejoin currently supports one shared room and a prepared three-checkpoint RSVP workshop using HTML, CSS and JavaScript. Recovery recognizes supported workshop patterns; unfamiliar code is handed off for human help. Projects are stored on your device, with export and import for moving your work.
 
 *Keep learning. Keep your work. Rejoin the stream.*
