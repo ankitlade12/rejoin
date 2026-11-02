@@ -281,18 +281,6 @@ The JSON store is intended for one process. Multiple replicas, ephemeral serverl
 - Secret screening is best-effort. Review every packet before forwarding it.
 - Fonts load from Google Fonts with offline fallbacks. No analytics are included.
 
-## Demo and Submission
-
-The prepared product video is **2 minutes 41 seconds, 1080p**, with synthesized Indian English male narration and **no subtitles**. It covers the problem, instructor controls, seven authorized real Twitch commands, recovery, privacy, exports and continuation. Local artifact: `artifacts/rejoin-product-demo.mp4`; recordings are excluded from Git.
-
-Suggested upload title: **Rejoin — Keep your place in the stream**.
-
-Suggested description: Live coding moves quickly. Rejoin helps learners return to a Twitch workshop without starting over. Follow checkpoints, work privately, request guidance with permission and approve focused repairs while keeping your personal project. This demonstration uses a prepared RSVP workshop and synthesized narration.
-
-Built with OpenAI Codex. Main development session: `01a1984a-2018-72b3-a62a-790d30a801a5`.
-
-The public source and hosted product are available. A public YouTube URL and completed Devpost submission have not yet been recorded. Video scripts in `scripts/` require macOS Aman voice, FFmpeg and Python Playwright; they are not runtime dependencies. The recorder sends public Twitch commands and requires the channel owner's authorization before each recording session.
-
 ## Production Boundary and Next Steps
 
 Rejoin is a single-room hackathon MVP with one prepared workshop. Multi-room hosting, arbitrary code execution, cloud project sync and a general workshop-authoring interface are outside the current implementation.
