@@ -41,7 +41,7 @@ The learner test encountered Twitch `redirect_mismatch`. Earlier user reports of
 - Genuine main Codex session: `01a1984a-2018-72b3-a62a-790d30a801a5`.
 - Description, limitations, links and judge instructions: SUBMISSION.md.
 - Repository is public after the authorized scan of the working tree and all 55 historical Git blobs. No configured secret values or tracked environment/runtime-data files were found.
-- Video: artifacts/rejoin-demo.mp4, 90.0 seconds, captioned real hosted recording. Includes a real Twitch C3-to-C2 event, a real OpenAI request and disclosed prepared alternatives/conflicts. User will upload to YouTube.
+- Video: artifacts/rejoin-product-demo.mp4, 161.35 seconds, 1080p, synthesized Indian English male narration, no subtitles. Product walkthrough includes instructor controls, seven authorized real Twitch commands, learner recovery, privacy and continuation. Supersedes the earlier captioned recording. User will upload to YouTube.
 - Devpost: user must submit through their account; no connected publishing tool is available.
 
 ## Scope retained
