@@ -150,4 +150,4 @@ Rejoin currently supports one shared room and a prepared three-checkpoint RSVP w
 
 ## License
 
-[MIT](LICENSE) © 2026 Ankit Hemant Lade. Third-party components retain their respective licenses, including the bundled [Acorn license](dist/vendor/acorn.LICENSE).
+[MIT](LICENSE) © 2026 Ankit Hemant Lade.
