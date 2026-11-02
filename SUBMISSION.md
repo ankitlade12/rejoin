@@ -10,7 +10,7 @@ Rejoin pairs a private browser workspace with a Twitch-connected workshop room. 
 Built with OpenAI Codex: vanilla JavaScript interface, Node backend, AST-based prepared-workshop recovery, sandboxed preview, revision guards, an OpenAI structured tutoring adapter, Twitch EventSub/OAuth integration and automated tests. Codex generated and revised implementation and tests; the developer reviewed the product direction and PRD.
 
 ## Honest demo disclosure
-The RSVP workshop and missing event binding are prepared examples. JavaScript execution is limited to recognized workshop forms. Runtime AI needs a configured key. Provider tests use fixtures until a real account rehearsal is completed. Do not claim live integration before recording it.
+The RSVP workshop and missing event binding are prepared examples. JavaScript execution is limited to recognized workshop forms. Runtime AI needs a configured key. Real OpenAI recovery passed in the hosted browser app, and live Twitch checkpoint delivery passed on the public Railway app. Automated provider tests also use disclosed fixtures. The deployed app is https://rejoin-production-bec2.up.railway.app; source is https://github.com/ankitlade12/rejoin (currently private).
 
 ## Three-minute recording plan
 - 0:00–0:20: Explain the learner's problem; show the prepared workshop and personalized event title.
@@ -26,8 +26,8 @@ The RSVP workshop and missing event binding are prepared examples. JavaScript ex
 - [ ] Public YouTube video under three minutes.
 - [ ] GitHub/GitLab/Bitbucket URL accessible to judges with source/assets/setup.
 - [ ] Actual Codex session ID from the main development thread.
-- [ ] Public full-stack URL or reproducible local testing instructions.
-- [ ] English description and testing instructions.
+- [x] Public full-stack URL and reproducible local testing instructions.
+- [x] English description and testing instructions prepared in this repository.
 - [ ] Devpost submission before November 2, 2026, 4 PM America/Chicago.
 
 Official requirements: https://twitchcon-codex.devpost.com/rules

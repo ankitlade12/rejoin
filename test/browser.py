@@ -6,7 +6,7 @@ with sync_playwright() as p:
  learner_context=browser.new_context(viewport={'width':1440,'height':1100})
  page=learner_context.new_page();errors=[]
  page.on('pageerror',lambda error:errors.append(str(error)))
- page.goto('http://localhost:4173');page.wait_for_function("document.querySelector('footer')?.textContent.includes('Twitch')")
+ page.goto('http://localhost:4173');page.wait_for_function("document.querySelector('.fineprint')?.textContent.includes('AI help available') || document.querySelector('footer')?.textContent.includes('Twitch not connected')")
  page.get_by_role('button',name='index.html').click()
  code=page.locator('#code');code.fill(code.input_value().replace('Late Night Builders','My Hackathon Hangout'))
  page.get_by_role('button',name='script.js').click()
@@ -47,7 +47,7 @@ with sync_playwright() as p:
  host.get_by_role('button',name='Publish a teaching note').click()
  host.locator('#host-note').fill('A function describes what; a listener describes when.')
  host.get_by_role('button',name='Publish note',exact=True).click()
- assert page.get_by_text('A function describes what; a listener describes when.').is_visible()
+ page.get_by_text('A function describes what; a listener describes when.').wait_for()
  host.get_by_role('button',name='Pause workshop',exact=True).click()
  page.wait_for_function("document.querySelector('footer').textContent.includes('paused')")
  page.get_by_role('button',name='✧ Help me continue →').click()

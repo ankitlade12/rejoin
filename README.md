@@ -2,6 +2,15 @@
 
 A working, single-room hackathon MVP for live coding workshops. Learners keep their own event page while reviewing and approving small, checked recovery steps. The interface uses charcoal and Twitch purple.
 
+## Hosted application
+
+- Learners: https://rejoin-production-bec2.up.railway.app/?join=1
+- Instructor: https://rejoin-production-bec2.up.railway.app/?host=1
+- OBS overlay: https://rejoin-production-bec2.up.railway.app/?overlay=1
+- Source: https://github.com/ankitlade12/rejoin (private; judge access still required).
+
+The Railway service runs one Node instance with a persistent volume. Instructor sign-in uses the password configured in the local `.env` and Railway runtime variables.
+
 ## Start
 
 Node.js 22+ is required (24 recommended).
@@ -43,7 +52,7 @@ Edit `.env` locally; never paste credentials into chat or commit them.
 | `REJOIN_AI_CALL_LIMIT` | Maximum room calls/hour, default 40; five per guest/hour |
 | `TWITCH_CLIENT_ID` | Registered Twitch application client ID |
 | `TWITCH_ACCESS_TOKEN` | Broadcaster-owned user token with `user:read:chat` |
-| `TWITCH_CLIENT_SECRET` | Needed only for optional learner OAuth linking |
+| `TWITCH_CLIENT_SECRET` | Required for learner OAuth linking and renewable broadcaster authorization |
 | `REJOIN_DATA_FILE` | Persistent room/session JSON, default `.data/state.json` |
 
 AI uses one request, no automatic retries, 24 KB script input, a 1,000-character question, 1,800 output-token cap, and a 45-second deadline. The model supplies tutoring and an allowed next action; deterministic code proposes edits. Authored assistance remains available without an API key. Models can be wrong; model output cannot establish a passed test.
@@ -74,7 +83,7 @@ docker run --rm -p 4173:4173 --env-file .env -e HOST=0.0.0.0 \
   -v rejoin-data:/app/.data rejoin
 ```
 
-The production container was built and its health, frontend, parser asset, and secret-file rejection were checked locally. TLS termination and the public hostname are hosting responsibilities. No public full-stack deployment is claimed.
+The production container was built and its health, frontend, parser asset, and secret-file rejection were checked locally. TLS termination and the public hostname are hosting responsibilities. The full application is deployed on Railway at the URL above. Public HTTPS health, real AI browser recovery, instructor/learner synchronization, mobile layout and secret-file rejection passed on November 1, 2026.
 
 ## Verification
 
@@ -99,8 +108,7 @@ Fonts load from Google Fonts with offline fallbacks. No analytics are included. 
 
 ## Remaining release gates
 
-- Real OpenAI guidance and a real broadcaster chat checkpoint command have passed locally. Broadcaster OAuth renewal, learner OAuth linking, and optional chat replies still need a live account rehearsal.
-- Deploy the full Node application to a persistent HTTPS host for remote learners; the static private preview is insufficient for this.
+- Real OpenAI guidance and broadcaster chat checkpoint delivery passed on the hosted app. The developer completed hosted broadcaster OAuth authorization; Twitch reports connected. Automatic token renewal after expiry, learner OAuth linking, and optional chat replies still need a live account rehearsal.
 - Run a three-person live rehearsal and record the actual Twitch interaction.
 - Publish an accessible GitHub/GitLab/Bitbucket repository, record a public YouTube demo under three minutes, add the real Codex session ID and submit on Devpost.
 - Human keyboard/screen-reader review and the full PRD T01–T16 evidence remain incomplete. The benchmark is narrower than the PRD's proposed research evaluation. No learning or market claim is made.
