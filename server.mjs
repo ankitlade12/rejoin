@@ -79,8 +79,9 @@ export const server=http.createServer(async(req,res)=>{
     else fail(400,'Invalid instructor action.');publish();return json(res,publicRoom());
    }
    if(url.pathname==='/api/twitch-check'){
-    host(session);rate('twitch-check',1,300000);if(store.data.room.ended)fail(409,'Resume the workshop first.');
-    const saved=vault.load();if(!saved?.refresh_token)fail(409,'Use Connect Twitch to save renewable authorization first.');
+    host(session);if(store.data.room.ended)fail(409,'Resume the workshop first.');
+    const saved=vault.load();if(!saved?.refresh_token)fail(409,'Use Authorize broadcaster chat in the instructor console to save renewable authorization first.');
+    rate('twitch-check',1,300000);
     // Exercise the real 401 recovery path using an invalid probe, without revoking working access.
     let renewed;const check=twitchAuthorizedFetch({tokens:{...saved,access_token:'rejoin-invalid-renewal-probe'},clientId:process.env.TWITCH_CLIENT_ID,clientSecret:process.env.TWITCH_CLIENT_SECRET,onTokens:next=>{vault.save(next);renewed=next;}});
     const response=await check('https://id.twitch.tv/oauth2/validate',{headers:{Authorization:'OAuth probe'}});
@@ -140,7 +141,7 @@ async function connectBroadcaster(tokens){
  }catch{connection='Twitch needs authorization';publish();throw Error('Twitch connection could not be established.');}finally{connecting=false;}
 }
 let storedTokens=null;try{storedTokens=vault.load();}catch{console.error('Saved Twitch authorization could not be opened. Connect Twitch again from the host console.');}
-function resumeConnector(){if(stopTwitch||connecting||store.data.room.ended)return;let tokens;try{tokens=vault.load();}catch{}tokens ||= process.env.TWITCH_ACCESS_TOKEN?{access_token:process.env.TWITCH_ACCESS_TOKEN}:null;if(tokens&&process.env.TWITCH_CLIENT_ID)connectBroadcaster(tokens).catch(()=>{});}
+function resumeConnector(){if(stopTwitch||connecting||store.data.room.ended)return;let tokens;try{tokens=vault.load();}catch{}tokens ||= process.env.TWITCH_ACCESS_TOKEN?{access_token:process.env.TWITCH_ACCESS_TOKEN}:null;if(tokens&&process.env.TWITCH_CLIENT_ID)connectBroadcaster(tokens).catch(()=>{});else{connection='Twitch not connected';canReply=false;}}
 resumeConnector();
 function shutdown(){stopTwitch?.();for(const job of jobs.values())job.controller.abort();for(const client of clients)client.end();server.close(()=>process.exit(0));setTimeout(()=>process.exit(0),5000).unref();}
 process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);

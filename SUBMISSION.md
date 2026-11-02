@@ -22,9 +22,9 @@ The RSVP workshop and missing event binding are prepared examples. JavaScript ex
 - 2:40–2:55: State what is working, the community benefit and the remaining scope limits.
 
 ## Submission checklist
-- [ ] Actual live Twitch rehearsal recorded.
+- [x] Actual live Twitch checkpoint transition recorded in artifacts/rejoin-demo.mp4.
 - [ ] Public YouTube video under three minutes.
-- [ ] GitHub/GitLab/Bitbucket URL accessible to judges with source/assets/setup.
+- [x] Public GitHub source with assets and setup: https://github.com/ankitlade12/rejoin.
 - [x] Main development Codex session ID: `01a1984a-2018-72b3-a62a-790d30a801a5` (confirmed from environment and session metadata).
 - [x] Public full-stack URL and reproducible local testing instructions.
 - [x] English description and testing instructions prepared in this repository.

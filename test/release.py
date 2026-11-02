@@ -33,7 +33,7 @@ with sync_playwright() as p:
  page.evaluate("()=>{window.originalSet=Storage.prototype.setItem;Storage.prototype.setItem=()=>{throw new DOMException('fixture','QuotaExceededError')};}")
  page.locator('#code').fill('// unsaved fixture');page.wait_for_timeout(350);page.get_by_role('button',name='index.html').click();assert 'Save failed' in page.locator('#save-state').inner_text()
  page.evaluate('()=>{Storage.prototype.setItem=window.originalSet;}')
- page.get_by_role('button',name='Privacy and settings',exact=True).click();picker=page.locator('#import');assert picker.is_visible();picker.focus();assert picker.evaluate('(e)=>e===document.activeElement');page.get_by_role('button',name='Close',exact=True).click()
+ page.get_by_role('button',name='Privacy and settings',exact=True).click();assert page.get_by_role('dialog',name='Your code. Your choice.').is_visible();picker=page.locator('#import');assert picker.is_visible();picker.focus();assert picker.evaluate('(e)=>e===document.activeElement');page.get_by_role('button',name='Close',exact=True).click()
  print('PASS: stale success cleared, receipt retains approved history, exact redacted packet, persistent save failure, keyboard-accessible import',flush=True)
  # Three independent learners: prepared defect, valid alternative, protected conflict.
  guests=[]

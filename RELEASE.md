@@ -30,18 +30,18 @@ The learner test encountered Twitch `redirect_mismatch`. Earlier user reports of
 
 `https://rejoin-production-bec2.up.railway.app/auth/twitch/callback`
 
-- Learner linking / consented !stuck and !ready: pending observed stored signal after callback correction.
+- Learner linking and explicit sharing were observed. A real `!ready` event was recorded at server timestamp 1793582146926. Instructor sign-in subsequently replaced that guest session and removed its sharing/link state; no learner details were made public. A separate `!stuck` event after saved consent is still to be observed.
 - Broadcaster OAuth and live refresh: pending validated renewable authorization.
-- Optional !rejoin replies: pending enabled live rehearsal; off by default.
-- Hosted restart/reconnect persistence: pending new deployment verification.
+- Optional !rejoin command reached the hosted handler at timestamp 1793582663181 while replies were enabled; connector reported no send failure. User-visible reply confirmation remains pending.
+- Hosted deployment restart passed: health reports mvp-3, the C3 room checkpoint survived, and Twitch reconnected. Local restart tests also preserved ten opted-in guest sessions.
 - Human screen-reader and three-person usability review: pending. Three isolated browser personas passed automation; they are not three human participants.
 
 ## Submission package
 
 - Genuine main Codex session: `01a1984a-2018-72b3-a62a-790d30a801a5`.
 - Description, limitations, links and judge instructions: SUBMISSION.md.
-- Repository public visibility: user authorized, pending final history/working-tree secret scan.
-- Video: preparing an upload-ready recording; user will upload to YouTube.
+- Repository is public after the authorized scan of the working tree and all 55 historical Git blobs. No configured secret values or tracked environment/runtime-data files were found.
+- Video: artifacts/rejoin-demo.mp4, 90.0 seconds, captioned real hosted recording. Includes a real Twitch C3-to-C2 event, a real OpenAI request and disclosed prepared alternatives/conflicts. User will upload to YouTube.
 - Devpost: user must submit through their account; no connected publishing tool is available.
 
 ## Scope retained

@@ -25,12 +25,15 @@ test('HTTP: instructor auth, CSRF, independent guests, sharing, deletion, paused
   const a=await guest(),b=await guest();assert.notEqual(a.csrf,b.csrf);assert.equal(a.share,false);
   const request=(path,data,session=a,extra={})=>fetch(origin+path,{method:data?'POST':'GET',headers:{Cookie:session.cookie,Origin:origin,'Content-Type':'application/json','X-CSRF-Token':session.csrf,...extra},...(data?{body:JSON.stringify(data)}:{})});
   assert.equal((await request('/api/host')).status,403);
+  assert.equal((await request('/api/twitch-check',{})).status,403);
   assert.equal((await request('/api/progress',{share:true,progress:'ready'},a,{'X-CSRF-Token':b.csrf})).status,403);
   assert.equal((await request('/api/progress',{share:true,progress:'ready'},a,{Origin:'https://attacker.example'})).status,403);
   assert.equal((await request('/api/progress',{share:true,progress:'stuck'})).status,200);
   assert.equal((await (await request('/api/session',null,b)).json()).share,false);
   const login=await request('/api/login',{password:'test-only-password-123456'});assert.equal(login.status,200);const host={...await login.json(),cookie:login.headers.get('set-cookie').split(';')[0]};
   assert.equal((await request('/api/host',null,a)).status,403);
+  assert.equal((await request('/api/twitch-check',{},host)).status,409);
+  assert.equal((await request('/api/twitch-check',{},host)).status,409); // Missing grant must not consume renewal cooldown.
   assert.equal((await request('/api/host',{action:'checkpoint',checkpoint:'C3'},host)).status,200);
   assert.equal((await (await request('/api/room',null,b)).json()).checkpoint,'C3');
   assert.equal((await request('/api/host',{action:'pause'},host)).status,200);
@@ -39,6 +42,7 @@ test('HTTP: instructor auth, CSRF, independent guests, sharing, deletion, paused
   assert.equal((await request('/api/tutor',{id:crypto.randomUUID(),consent:'ai-script-v1',script:broken,target:'C2',question:'Help'},b)).status,503);
   assert.equal((await request('/api/host',{action:'note',note:'Review event listeners'},host)).status,200);
   const publicData=await (await request('/api/room',null,b)).json();assert.equal(publicData.note,'Review event listeners');assert.equal(publicData.counts,null);assert.ok(!JSON.stringify(publicData).includes('csrf'));
+  await request('/api/host',{action:'end'},host);const ended=await(await request('/api/room',null,b)).json();assert.equal(ended.ended,true);assert.equal(ended.paused,true);assert.match(ended.connection,/disconnected/);await request('/api/host',{action:'resume'},host);assert.equal((await(await request('/api/room',null,b)).json()).connection,'Twitch not connected');
   const del=await fetch(origin+'/api/session',{method:'DELETE',headers:{Cookie:b.cookie,Origin:origin,'X-CSRF-Token':b.csrf}});assert.equal(del.status,200);assert.equal((await request('/api/progress',{share:true,progress:'ready'},b)).status,403);
   assert.equal((await fetch(origin+'/.env')).status,404);assert.equal((await fetch(origin+'/api/workspaces/other-user')).status,404);
  }finally{child.kill();await new Promise(resolve=>child.once('exit',resolve));rmSync(dir,{recursive:true,force:true});}

@@ -1,3 +1,7 @@
+# Earlier release evidence
+
+See [RELEASE.md](RELEASE.md) for current 1.1 validation and resolved findings. This file records the earlier release rehearsal.
+
 # Rejoin release evidence
 
 Updated November 1, 2026. These are observed checks, not blanket production certification.
