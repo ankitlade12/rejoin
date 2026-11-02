@@ -1,0 +1,13 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {propose,applyPlan,snapshot,contractVersion} from '../dist/core.js';
+import {helpPacket,redact} from '../dist/privacy.js';
+import {manifest,validateManifest} from '../lib/workshop.mjs';
+import {Store} from '../lib/store.mjs';import {fixtures} from './fixtures.mjs';
+test('30 versioned cases cover five categories, with three explicit ambiguous abstentions',()=>{
+ assert.equal(fixtures.length,30);assert.equal(new Set(fixtures.map(f=>f.id)).size,30);assert.equal(fixtures.filter(f=>f.ambiguous).length,3);
+ for(const category of new Set(fixtures.map(f=>f.category)))assert.equal(fixtures.filter(f=>f.category===category).length,6);
+ for(const f of fixtures){const before=snapshot(f.files),plan=propose(f.files,f.target,f.protected||[]);assert.equal(plan.state,f.expected,f.id);assert.equal(snapshot(f.files),before,f.id+' unchanged');if(f.stale){assert.throws(()=>applyPlan({...f.files,[f.stale]:f.files[f.stale]+'changed'},plan));continue;}if(plan.state==='candidate'){const result=applyPlan(f.files,plan);assert.equal(result['index.html'],f.files['index.html']);assert.equal(result['style.css'],f.files['style.css']);assert.ok(result['script.js'].includes(f.files['script.js'])||f.target==='C3');}}
+});
+test('manifest rejects changed references/tests and approval rejects a different contract',()=>{assert.equal(manifest.version,contractVersion);assert.throws(()=>validateManifest({...manifest,version:'changed'}));const f=fixtures.find(f=>f.expected==='candidate');const p=propose(f.files,f.target);assert.throws(()=>applyPlan(f.files,{...p,version:'old'}));});
+test('reviewed human packet screens selected files and question and excludes unselected content',()=>{const result=helpPacket({files:{'script.js':'const password = "fake-password-value";','index.html':'not selected'},selected:['script.js'],target:'C2',question:'api_key="fake-question-value"',checks:null,history:[],version:contractVersion});assert.equal(result.redactions,2);assert.ok(!JSON.stringify(result.packet).includes('fake-password'));assert.ok(!JSON.stringify(result.packet).includes('not selected'));assert.match(redact('-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----').text,/REDACTED/);});
+test('blocker reports below five are suppressed and revoke removes categories',()=>{const store=new Store(null);const guests=[];for(let i=0;i<5;i++){const g=store.create();Object.assign(g.session,{share:true,blocker:'binding',checkpoint:'C2'});guests.push(g);}assert.equal(store.publicRoom('Connected','channel').blockers.binding,5);store.remove(guests[0].token);assert.deepEqual(store.publicRoom('Connected','channel').blockers,{});});

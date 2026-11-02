@@ -1,3 +1,4 @@
+import {manifest} from './lib/workshop.mjs';
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
@@ -31,16 +32,17 @@ export const server=http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,origin), token=cookie(req);let session=store.get(token);
   if(url.pathname.startsWith('/api/')||url.pathname.startsWith('/auth/'))rate(req.socket.remoteAddress||'unknown',240);
-  if(req.method==='GET'&&url.pathname==='/api/health'){return json(res,{ok:true,aiConfigured:!!process.env.OPENAI_API_KEY,hostConfigured:(process.env.REJOIN_HOST_PASSWORD?.length||0)>=16,twitch:connection,version:'mvp-2'});}
+  if(req.method==='GET'&&url.pathname==='/api/health'){return json(res,{ok:true,aiConfigured:!!process.env.OPENAI_API_KEY,hostConfigured:(process.env.REJOIN_HOST_PASSWORD?.length||0)>=16,twitch:connection,version:'mvp-3'});}
   if(req.method==='GET'&&url.pathname==='/api/session'){
    if(!session){const created=store.create();session=created.session;setCookie(res,created.token);publish();}
-   return json(res,{csrf:session.csrf,host:session.host,share:session.share,progress:session.progress,linked:!!session.linkedId,aiConfigured:!!process.env.OPENAI_API_KEY,twitchLinkConfigured:!!process.env.TWITCH_CLIENT_ID&&!!process.env.TWITCH_CLIENT_SECRET,room:publicRoom()});
+   return json(res,{csrf:session.csrf,host:session.host,share:session.share,progress:session.progress,checkpoint:session.checkpoint,blocker:session.blocker||'none',linked:!!session.linkedId,aiConfigured:!!process.env.OPENAI_API_KEY,twitchLinkConfigured:!!process.env.TWITCH_CLIENT_ID&&!!process.env.TWITCH_CLIENT_SECRET,room:publicRoom()});
   }
+  if(req.method==='GET'&&url.pathname==='/api/workshop')return json(res,manifest);
   if(req.method==='GET'&&url.pathname==='/api/room')return json(res,publicRoom());
   if(req.method==='GET'&&url.pathname==='/api/events'){
    if(clients.size>=100)fail(429,'Room event capacity reached.');res.writeHead(200,{'Content-Type':'text/event-stream',Connection:'keep-alive'});res.write(`data: ${JSON.stringify(publicRoom())}\n\n`);clients.add(res);const timer=setInterval(()=>res.write(': keepalive\n\n'),20000);req.on('close',()=>{clients.delete(res);clearInterval(timer);});return;
   }
-  if(req.method==='GET'&&url.pathname==='/api/host'){host(session);return json(res,{...publicRoom(),aggregate:store.aggregate(),aiCalls:store.data.budget.calls});}
+  if(req.method==='GET'&&url.pathname==='/api/host'){host(session);return json(res,{...publicRoom(),aggregate:store.aggregate(),aiCalls:store.data.budget.calls,integration:store.data.integration||{},linkedLearners:Object.values(store.data.sessions).filter(s=>s.linkedId&&!s.host&&s.expires>Date.now()).length});}
   if(req.method==='GET'&&url.pathname==='/auth/twitch/callback'){
    const state=oauth.get(url.searchParams.get('state'));oauth.delete(url.searchParams.get('state'));
    if(!state||state.expires<Date.now()||!session||state.owner!==digest(token))fail(403,'Twitch sign-in expired. Start again from privacy settings.');
@@ -65,16 +67,25 @@ export const server=http.createServer(async(req,res)=>{
    if(url.pathname==='/api/logout'){session.host=false;store.save();return json(res,{ok:true});}
    if(url.pathname==='/api/progress'){
     if(typeof data.share!=='boolean'||!['unknown','ready','stuck','building'].includes(data.progress))fail(400,'Invalid sharing choice.');
-    session.share=data.share;session.progress=data.share?data.progress:'unknown';session.checkpoint=null;publish();return json(res,{share:session.share,progress:session.progress});
+    if(data.checkpoint!==undefined&&!['C1','C2','C3'].includes(data.checkpoint))fail(400,'Invalid checkpoint.');if(data.blocker!==undefined&&!['none','binding','count','markup','protected','unsupported'].includes(data.blocker))fail(400,'Invalid blocker.');session.share=data.share;session.progress=data.share?data.progress:'unknown';session.checkpoint=data.share?(data.checkpoint||null):null;session.blocker=data.share?(data.blocker||'none'):'none';session.reportedAt=Date.now();publish();return json(res,{share:session.share,progress:session.progress,checkpoint:session.checkpoint,blocker:session.blocker});
    }
    if(url.pathname==='/api/host'){
-    host(session);if(data.action==='checkpoint'&&['C1','C2','C3'].includes(data.checkpoint)){store.data.room.checkpoint=data.checkpoint;store.data.room.paused=false;store.data.room.ended=false;}
+    host(session);if(data.action==='checkpoint'&&['C1','C2','C3'].includes(data.checkpoint)){store.data.room.checkpoint=data.checkpoint;store.data.room.paused=false;store.data.room.ended=false;resumeConnector();}
     else if(data.action==='pause')store.data.room.paused=true;
-    else if(data.action==='resume'){store.data.room.paused=false;store.data.room.ended=false;}
-    else if(data.action==='end'){store.data.room.ended=true;store.data.room.paused=true;for(const job of jobs.values())job.controller.abort();}
+    else if(data.action==='resume'){store.data.room.paused=false;store.data.room.ended=false;resumeConnector();}
+    else if(data.action==='end'){store.data.room.ended=true;store.data.room.paused=true;stopTwitch?.();stopTwitch=null;connection='Workshop ended · Twitch disconnected';canReply=false;for(const job of jobs.values())job.controller.abort();}
     else if(data.action==='chat-replies'&&typeof data.enabled==='boolean'){if(data.enabled&&(!canReply||!origin.startsWith('https://')))fail(409,'Chat replies need a connected token with user:write:chat and a public HTTPS origin.');store.data.room.chatReplies=data.enabled;}
-    else if(data.action==='note'&&typeof data.note==='string'&&data.note.length<=800)store.data.room.note=data.note;
+    else if(data.action==='note'&&typeof data.note==='string'&&data.note.length<=800){if(data.checkpoint!==undefined&&!['C1','C2','C3'].includes(data.checkpoint))fail(400,'Invalid note checkpoint.');store.data.room.note=data.note;store.data.room.noteCheckpoint=data.checkpoint||store.data.room.checkpoint;store.data.room.noteId=secret();}
     else fail(400,'Invalid instructor action.');publish();return json(res,publicRoom());
+   }
+   if(url.pathname==='/api/twitch-check'){
+    host(session);rate('twitch-check',1,300000);if(store.data.room.ended)fail(409,'Resume the workshop first.');
+    const saved=vault.load();if(!saved?.refresh_token)fail(409,'Use Connect Twitch to save renewable authorization first.');
+    // Exercise the real 401 recovery path using an invalid probe, without revoking working access.
+    let renewed;const check=twitchAuthorizedFetch({tokens:{...saved,access_token:'rejoin-invalid-renewal-probe'},clientId:process.env.TWITCH_CLIENT_ID,clientSecret:process.env.TWITCH_CLIENT_SECRET,onTokens:next=>{vault.save(next);renewed=next;}});
+    const response=await check('https://id.twitch.tv/oauth2/validate',{headers:{Authorization:'OAuth probe'}});
+    if(!response.ok||!renewed)fail(502,'Renewal check failed. Reconnect Twitch.');
+    await connectBroadcaster(renewed);store.data.integration={...store.data.integration,renewalCheckedAt:Date.now()};store.save();return json(res,{ok:true,checkedAt:store.data.integration.renewalCheckedAt,method:'Real invalid-token 401 followed by refresh and validation; not a timed expiry observation.'});
    }
    if(url.pathname==='/api/link'||url.pathname==='/api/connect-twitch'){
     const broadcaster=url.pathname==='/api/connect-twitch';if(broadcaster)host(session);
@@ -105,8 +116,8 @@ export const server=http.createServer(async(req,res)=>{
   if(url.pathname.startsWith('/api/'))fail(404,'Endpoint not found.');
   if(req.method!=='GET')fail(405,'Method not allowed.');
   const name=url.pathname==='/'?'index.html':url.pathname.slice(1);
-  if(!['index.html','app.js','core.js','style.css','live.js','vendor/acorn.mjs'].includes(name))fail(404,'Not found.');
-  const file=await readFile(root+name);res.writeHead(200,{'Content-Type':({'html':'text/html','css':'text/css','js':'text/javascript','mjs':'text/javascript'})[name.split('.').pop()]+'; charset=utf-8'});res.end(file);
+  if(!['index.html','app.js','core.js','style.css','live.js','privacy.js','preview.js','workshop-manifest.json','vendor/acorn.mjs'].includes(name))fail(404,'Not found.');
+  const file=await readFile(root+name);res.writeHead(200,{'Content-Type':({'html':'text/html','css':'text/css','js':'text/javascript','mjs':'text/javascript','json':'application/json'})[name.split('.').pop()]+'; charset=utf-8'});res.end(file);
  }catch(error){if(!res.headersSent)json(res,{error:error.status?error.message:'Service unavailable. Your local project is safe.'},error.status||500);else if(!res.writableEnded)res.end();}
  finally{if(jobId)jobs.delete(jobId);}
 });
@@ -118,17 +129,18 @@ async function connectBroadcaster(tokens){
   stopTwitch?.();stopTwitch=null;
   stopTwitch=await startTwitch({token:tokens.access_token,clientId:process.env.TWITCH_CLIENT_ID,
    fetchImpl:twitchAuthorizedFetch({tokens,clientId:process.env.TWITCH_CLIENT_ID,clientSecret:process.env.TWITCH_CLIENT_SECRET,onTokens:next=>vault.save(next)}),
-   onState:state=>{connection=state.connection;channel=state.channel;canReply=!!state.canReply;publish();},
+   onState:state=>{if(store.data.room.ended)return;connection=state.connection;channel=state.channel;canReply=!!state.canReply;publish();},
    onCommand:(event,userId)=>{
     if(store.data.room.ended)return;
-    if(event.type==='join'&&store.data.room.chatReplies&&canReply&&origin.startsWith('https://'))return `Join the coding workshop privately: ${origin}/?join=1`;
+    if(event.type==='join'&&store.data.room.chatReplies&&canReply&&origin.startsWith('https://')){store.data.integration={...store.data.integration,lastJoinCommandAt:Date.now()};store.save();return `Join the coding workshop privately: ${origin}/?join=1`;}
     if(event.type==='checkpoint'){store.data.room.checkpoint=event.checkpoint;store.data.room.paused=false;publish();}
     if(event.type==='pause'){store.data.room.paused=true;publish();}
-    if(['stuck','ready'].includes(event.type)){const learner=Object.values(store.data.sessions).find(s=>s.linkedId===userId&&s.share&&s.expires>Date.now());if(learner){learner.progress=event.type;publish();}}
-   }});
+    if(['stuck','ready'].includes(event.type)){const learner=Object.values(store.data.sessions).find(s=>s.linkedId===userId&&s.share&&s.expires>Date.now());if(learner){learner.progress=event.type;learner.reportedAt=Date.now();store.data.integration={...store.data.integration,lastLearnerSignal:{status:event.type,at:Date.now()}};publish();}}
+   }});if(store.data.room.ended){stopTwitch?.();stopTwitch=null;}
  }catch{connection='Twitch needs authorization';publish();throw Error('Twitch connection could not be established.');}finally{connecting=false;}
 }
 let storedTokens=null;try{storedTokens=vault.load();}catch{console.error('Saved Twitch authorization could not be opened. Connect Twitch again from the host console.');}
-if(process.env.TWITCH_CLIENT_ID&&(storedTokens||process.env.TWITCH_ACCESS_TOKEN))connectBroadcaster(storedTokens||{access_token:process.env.TWITCH_ACCESS_TOKEN}).catch(()=>{});
+function resumeConnector(){if(stopTwitch||connecting||store.data.room.ended)return;let tokens;try{tokens=vault.load();}catch{}tokens ||= process.env.TWITCH_ACCESS_TOKEN?{access_token:process.env.TWITCH_ACCESS_TOKEN}:null;if(tokens&&process.env.TWITCH_CLIENT_ID)connectBroadcaster(tokens).catch(()=>{});}
+resumeConnector();
 function shutdown(){stopTwitch?.();for(const job of jobs.values())job.controller.abort();for(const client of clients)client.end();server.close(()=>process.exit(0));setTimeout(()=>process.exit(0),5000).unref();}
 process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);

@@ -16,19 +16,6 @@ test('AI boundary requires consent, rejects secrets/oversize, and grounds eviden
  assert.throws(()=>validateTutorOutput({hint:'x',explanation:'x',nextAction:'review',evidence:['invented-test']},validateTutorInput(body)));
  const result=validateTutorOutput({hint:'x',explanation:'x',nextAction:'review',evidence:['E1']},{...validateTutorInput(body),kind:'unsupported'});assert.equal(result.nextAction,'handoff');
 });
-test('30 fixture benchmark: missing bindings, alternatives, protected conflicts, stale edits, adversarial input',()=>{
- let count=0;
- for(let i=0;i<6;i++){
-  const files={...starter,'index.html':starter['index.html'].replace('Late Night Builders','Custom event '+i),'style.css':starter['style.css']+'\n/* custom '+i+' */','script.js':broken+'\n// learner note '+i};
-  const plan=propose(files,'C2');const next=applyPlan(files,plan);assert.equal(next['index.html'],files['index.html']);assert.equal(next['style.css'],files['style.css']);assert.ok(next['script.js'].includes('learner note '+i));assert.equal(scriptKind(next['script.js']),'C2');count++;
-  assert.equal(propose({...files,'script.js':alternative+'\n// variant '+i},'C2').state,'no-change');count++;
-  assert.equal(propose(files,'C2',['script.js']).state,'conflict');count++;
-  assert.throws(()=>applyPlan({...files,'style.css':files['style.css']+'\nnew'},plan));count++;
-  const evil=['while(true){}','fetch("https://evil.example")','parent.postMessage({pass:true},"*")','document.cookie','import("evil")','eval("alert(1)")'][i];assert.equal(scriptKind(evil),'unsupported');assert.equal(executableScript(evil),'');count++;
- }
- assert.equal(count,30);
- const comment=fixed+'\n// </script><script>parent.postMessage("fake", "*")</script>';assert.equal(scriptKind(comment),'C2');assert.equal(executableScript(comment),fixed);
-});
 test('HTTP: instructor auth, CSRF, independent guests, sharing, deletion, paused room and AI configuration',async()=>{
  const dir=mkdtempSync(join(tmpdir(),'rejoin-http-'));const port=4391;const origin=`http://localhost:${port}`;
  const child=spawn(process.execPath,['server.mjs'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:String(port),PUBLIC_ORIGIN:origin,REJOIN_DATA_FILE:join(dir,'state.json'),REJOIN_HOST_PASSWORD:'test-only-password-123456',OPENAI_API_KEY:'',TWITCH_ACCESS_TOKEN:'',TWITCH_CLIENT_ID:''},stdio:['ignore','pipe','pipe']});

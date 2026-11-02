@@ -1,3 +1,4 @@
+export const contractVersion='1.1.0';
 import {parse} from './vendor/acorn.mjs';
 export const checkpoints = [
   { id: 'C1', title: 'Make it yours', detail: 'Build your event page. Give it your own title and style.' },
@@ -42,10 +43,10 @@ export function propose(files, target, protectedFiles = []) {
  }
  const next={...files,'script.js':repaired};
  if(scriptKind(repaired)!==target)throw Error('The suggested change is outside the supported workshop. Ask your instructor.');
- return {state:'candidate',before:snapshot(files),after:snapshot(next),files:next,target,removed:'No existing lines removed',added:additions.join('\n')};
+ return {state:'candidate',version:contractVersion,before:snapshot(files),after:snapshot(next),files:next,target,removed:'No existing lines removed',added:additions.join('\n')};
 }
 export function applyPlan(files, plan) {
- if(plan.state !== 'candidate' || snapshot(files)!==plan.before) throw Error('Your code changed since this review. Request a fresh review before applying.');
+ if(plan.version!==contractVersion || plan.state !== 'candidate' || snapshot(files)!==plan.before) throw Error('Your code changed since this review. Request a fresh review before applying.');
  if(snapshot(plan.files)!==plan.after) throw Error('This suggestion changed. Request a fresh review.');
  return structuredClone(plan.files);
 }

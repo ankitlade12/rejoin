@@ -5,6 +5,8 @@ RUN npm ci --omit=dev
 COPY dist ./dist
 COPY lib ./lib
 COPY server.mjs ./
+COPY scripts/validate-workshop.mjs ./scripts/
+RUN npm run validate:workshop
 RUN mkdir -p /app/.data && chown -R node:node /app
 USER node
 ENV HOST=0.0.0.0 PORT=4173

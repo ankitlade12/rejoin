@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.env server.mjs",
     "test": "node --test test/*.test.mjs",
-    "check": "node --check dist/app.js && node --check dist/core.js && node --check dist/live.js && node --check server.mjs && node --check lib/ai.mjs && node --check lib/twitch.mjs",
+    "check": "node --check dist/app.js && node --check dist/core.js && node --check dist/live.js && node --check server.mjs && node --check lib/ai.mjs && node --check lib/twitch.mjs && node --check dist/privacy.js && node --check dist/preview.js && npm run validate:workshop",
     "setup": "node scripts/setup.mjs",
-    "doctor": "node --env-file-if-exists=.env scripts/doctor.mjs"
+    "doctor": "node --env-file-if-exists=.env scripts/doctor.mjs",
+    "validate:workshop": "node scripts/validate-workshop.mjs"
   },
   "engines": {
     "node": ">=22"

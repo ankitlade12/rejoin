@@ -45,6 +45,7 @@ with sync_playwright() as p:
  assert page.locator('#code').input_value()==latest
  assert 'C2' in page.locator('.target-card strong').inner_text()
  host.get_by_role('button',name='Publish a teaching note').click()
+ host.locator('#note-checkpoint').select_option('C2')
  host.locator('#host-note').fill('A function describes what; a listener describes when.')
  host.get_by_role('button',name='Publish note',exact=True).click()
  page.get_by_text('A function describes what; a listener describes when.').wait_for()

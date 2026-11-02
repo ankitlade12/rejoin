@@ -10,7 +10,7 @@ Rejoin pairs a private browser workspace with a Twitch-connected workshop room. 
 Built with OpenAI Codex: vanilla JavaScript interface, Node backend, AST-based prepared-workshop recovery, sandboxed preview, revision guards, an OpenAI structured tutoring adapter, Twitch EventSub/OAuth integration and automated tests. Codex generated and revised implementation and tests; the developer reviewed the product direction and PRD.
 
 ## Honest demo disclosure
-The RSVP workshop and missing event binding are prepared examples. JavaScript execution is limited to recognized workshop forms. Runtime AI needs a configured key. Real OpenAI recovery passed in the hosted browser app, and live Twitch checkpoint delivery passed on the public Railway app. Automated provider tests also use disclosed fixtures. The deployed app is https://rejoin-production-bec2.up.railway.app; source is https://github.com/ankitlade12/rejoin (currently private).
+The RSVP workshop and missing event binding are prepared examples. JavaScript execution is limited to recognized workshop forms. Runtime AI needs a configured key. Real OpenAI recovery passed in the hosted browser app, and live Twitch checkpoint delivery passed on the public Railway app. Automated provider tests also use disclosed fixtures. The deployed app is https://rejoin-production-bec2.up.railway.app; source is https://github.com/ankitlade12/rejoin .
 
 ## Three-minute recording plan
 - 0:00–0:20: Explain the learner's problem; show the prepared workshop and personalized event title.
@@ -25,9 +25,20 @@ The RSVP workshop and missing event binding are prepared examples. JavaScript ex
 - [ ] Actual live Twitch rehearsal recorded.
 - [ ] Public YouTube video under three minutes.
 - [ ] GitHub/GitLab/Bitbucket URL accessible to judges with source/assets/setup.
-- [ ] Actual Codex session ID from the main development thread.
+- [x] Main development Codex session ID: `01a1984a-2018-72b3-a62a-790d30a801a5` (confirmed from environment and session metadata).
 - [x] Public full-stack URL and reproducible local testing instructions.
 - [x] English description and testing instructions prepared in this repository.
 - [ ] Devpost submission before November 2, 2026, 4 PM America/Chicago.
 
 Official requirements: https://twitchcon-codex.devpost.com/rules
+
+## Ready-to-paste links
+
+- Application: https://rejoin-production-bec2.up.railway.app/?join=1
+- Source: https://github.com/ankitlade12/rejoin
+- Codex session: `01a1984a-2018-72b3-a62a-790d30a801a5`
+- YouTube: add the public URL after uploading the prepared recording.
+
+## Judge testing
+
+Join privately, personalize the event title, select C2, choose Help me continue, then an authored hint or optional consented AI guidance. Review the proposed fix, check it, approve, and click the RSVP button. Verify the title stayed unchanged. Try undo; add a new comment and observe that undo offers a separate pre-fix copy. Protect script.js before requesting another fix to see a safe conflict. The public OBS overlay shows live Twitch checkpoint changes without learner code. Instructor access uses a private password; do not publish it in the description or video.

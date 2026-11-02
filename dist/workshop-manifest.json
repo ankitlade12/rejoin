@@ -1,0 +1,62 @@
+{
+  "id": "community-rsvp",
+  "version": "1.1.0",
+  "files": [
+    "index.html",
+    "style.css",
+    "script.js"
+  ],
+  "limits": {
+    "files": 3,
+    "bytesPerFile": 100000
+  },
+  "runtime": "restricted-canonical-browser",
+  "harnessHash": "57398956a0f51ae62038624cf769fae3073f9993d25a1bad4c7787744b2498df",
+  "checkpoints": [
+    {
+      "id": "C1",
+      "title": "Make it yours",
+      "detail": "Build your event page. Give it your own title and style.",
+      "version": "1.1.0",
+      "parents": [],
+      "referenceHash": "8dd01cef9d35c3d4ae2ffbe27a1ff2776ab8bd0107a7c574b6064d60cf6acc5e",
+      "tests": [
+        "title"
+      ],
+      "practice": "Explain why an event listener receives a function instead of calling it immediately."
+    },
+    {
+      "id": "C2",
+      "title": "Wire up the RSVP",
+      "detail": "Connect a click event to the RSVP button. Register only once.",
+      "version": "1.1.0",
+      "parents": [
+        "C1"
+      ],
+      "referenceHash": "13dd7b563d7d289028fccf515142cbe9b10a2a8128f9eb22bfb5e92b1fa8a953",
+      "tests": [
+        "title",
+        "registration",
+        "announcement"
+      ],
+      "practice": "Explain why an event listener receives a function instead of calling it immediately."
+    },
+    {
+      "id": "C3",
+      "title": "Count your community",
+      "detail": "Update the attendee count and announce the confirmation.",
+      "version": "1.1.0",
+      "parents": [
+        "C2"
+      ],
+      "referenceHash": "5dab8a5b61aeda45c539ec6d03bae7c26aa6210e2e792e649625da7061646cf7",
+      "tests": [
+        "title",
+        "registration",
+        "announcement",
+        "count"
+      ],
+      "practice": "Explain why an event listener receives a function instead of calling it immediately."
+    }
+  ]
+}

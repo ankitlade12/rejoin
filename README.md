@@ -7,7 +7,7 @@ A working, single-room hackathon MVP for live coding workshops. Learners keep th
 - Learners: https://rejoin-production-bec2.up.railway.app/?join=1
 - Instructor: https://rejoin-production-bec2.up.railway.app/?host=1
 - OBS overlay: https://rejoin-production-bec2.up.railway.app/?overlay=1
-- Source: https://github.com/ankitlade12/rejoin (private; judge access still required).
+- Source: https://github.com/ankitlade12/rejoin (judge visibility is recorded in RELEASE.md).
 
 The Railway service runs one Node instance with a persistent volume. Instructor sign-in uses the password configured in the local `.env` and Railway runtime variables.
 
@@ -32,9 +32,9 @@ Learner invitation: `http://localhost:4173/?join=1`. OBS browser source: `http:/
 - Optional runtime AI guidance using the OpenAI Responses API through the AI SDK. Exact script-sharing preview, explicit consent, structured evidence, secret screening, cancellation, timeout and room/user budgets. AI never applies code or certifies behavior.
 - AST-recognized workshop variants, including whitespace/comments and two event binding styles. Recovery inserts required statements while retaining learner comments, title and CSS. Unknown programs receive a handoff instead of unsafe execution.
 - Candidate behavioral checks, exact file before/after review, explicit approval, stale-revision rejection, protected files and undo. Undo after new edits offers a separate pre-fix export.
-- Local save/reload, export/import, activity receipt, private help packet and deletion.
-- Independent guest sessions, instructor password authentication, session rotation, CSRF checks, authenticated host controls, teaching notes, pause/end, live SSE checkpoint updates and invitation links.
-- Opt-in self-reported community status. Public breakdowns are suppressed below five opted-in guests. No learner code or private question is included in room state or overlay.
+- Persistent save/error states, keyboard-accessible export/import, recovery history receipt, selected-file redacted help preview and deletion.
+- Independent guest sessions, instructor password authentication, session rotation, CSRF checks, authenticated host controls, checkpoint-linked, dismissible teaching notes, pause/end and personal continuation, live SSE checkpoint updates and invitation links.
+- Opt-in self-reported community status, checkpoint and blocker categories. Public breakdowns are suppressed below five opted-in guests, and blocker groups require five reports. No learner code or private question is included in room state or overlay.
 - Twitch EventSub connector, broadcaster-only checkpoint/pause commands, OAuth learner linking, linked/consented `!stuck` and `!ready`, reconnection, revocation and event deduplication.
 - Optional `!rejoin` public link replies, disabled until the host explicitly enables them. Requires a public HTTPS origin and `user:write:chat`; limited to one reply per 30 seconds.
 
@@ -85,14 +85,22 @@ docker run --rm -p 4173:4173 --env-file .env -e HOST=0.0.0.0 \
 
 The production container was built and its health, frontend, parser asset, and secret-file rejection were checked locally. TLS termination and the public hostname are hosting responsibilities. The full application is deployed on Railway at the URL above. Public HTTPS health, real AI browser recovery, instructor/learner synchronization, mobile layout and secret-file rejection passed on November 1, 2026.
 
+## Versioned workshop
+
+`dist/workshop-manifest.json` pins version 1.1.0, three instructor reference hashes, prerequisites, test identifiers and the trusted preview harness hash. `npm run validate:workshop` rejects changed contracts. `test/release.py` executes all three references and all 30 fixture outcomes in a real browser. Publication requires both checks. Unknown JavaScript remains refused; this is not a general-purpose remote code runner.
+
 ## Verification
 
 ```sh
 npm run check
 npm test
+python3 test/release.py
+node test/load.mjs
 ```
 
-22 Node tests pass, including a 30-fixture deterministic recovery benchmark, HTTP session/authorization/CSRF/privacy tests, real SDK request serialization with a mocked model response, and simulated Twitch EventSub handshake/deduplication/migration/revocation. Fixtures are disclosed test data; they do not establish real provider availability or model accuracy.
+25 Node tests pass, including a 30 individually identified, versioned recovery fixtures across five categories, HTTP session/authorization/CSRF/privacy tests, real SDK request serialization with a mocked model response, and simulated Twitch EventSub handshake/deduplication/migration/revocation. Fixtures are disclosed test data; they do not establish real provider availability or model accuracy.
+
+Install Python Playwright and Chromium for browser tests. `CHROMIUM_PATH` can select an installed browser. Use a disposable server and the test-only password for `test/release.py`; it changes its test room. Do not run it against a shared live room.
 
 The browser test uses independent instructor and learner contexts and tests customization, actual RSVP behavior, saving, safe undo, live checkpoint/note/pause delivery, sharing/revocation and mobile layout. Start a disposable server with `REJOIN_HOST_PASSWORD=test-only-password-123456` and an isolated `REJOIN_DATA_FILE`, then run `python3 test/browser.py` with Python Playwright installed. `CHROMIUM_PATH` can select an existing browser. `python3 test/browser-ai.py` additionally tests AI consent and approval using a disclosed mock response, never a real model call. The test password is a fixture only; never use it for a deployed room.
 
@@ -106,11 +114,6 @@ The preview has an opaque origin, no same-origin privilege, an HTML allowlist, a
 
 Fonts load from Google Fonts with offline fallbacks. No analytics are included. A learner's self-reported readiness is always separate from local verification and from understanding.
 
-## Remaining release gates
+## Release evidence and remaining human steps
 
-- Real OpenAI guidance and broadcaster chat checkpoint delivery passed on the hosted app. The developer completed hosted broadcaster OAuth authorization; Twitch reports connected. Automatic token renewal after expiry, learner OAuth linking, and optional chat replies still need a live account rehearsal.
-- Run a three-person live rehearsal and record the actual Twitch interaction.
-- Publish an accessible GitHub/GitLab/Bitbucket repository, record a public YouTube demo under three minutes, add the real Codex session ID and submit on Devpost.
-- Human keyboard/screen-reader review and the full PRD T01–T16 evidence remain incomplete. The benchmark is narrower than the PRD's proposed research evaluation. No learning or market claim is made.
-
-This MVP intentionally supports one room and one prepared workshop. Multi-language repair, arbitrary code execution, cloud code sync and a workshop marketplace are outside it.
+See [RELEASE.md](RELEASE.md) for current observed results, OAuth setup, publishing status and remaining human checks. [FEATURE_AUDIT.md](FEATURE_AUDIT.md) preserves the earlier audit, not the current implementation status.
